@@ -83,10 +83,7 @@ def checkDir(dirname):
 
 # check dict key existance
 def checkKey(dict, key):
-    if key in dict.keys():
-        return True
-    else:
-        return False
+    return key in dict.keys()
 
 # whois data
 def fetchWhoisData(domain):
@@ -94,11 +91,8 @@ def fetchWhoisData(domain):
         payload={'q':domain}
         r = requests.get('https://lookup.icann.org/api/whois', payload)
         response = json.loads(r.text)
-        if(checkKey(response,'errorCode')):
-            if response['errorCode'] == 7:
-                domain_exist = False
-            else:
-                domain_exist = True
+        if (checkKey(response,'errorCode')):
+            domain_exist = response['errorCode'] != 7
             status = False
             ret_data = response['message']
         else:
@@ -131,93 +125,89 @@ def sortDomainData(domain,data):
     # that's weird but it's like that
     apex_status = data['pageProps']['apexDomainData']['success']
     ns_status = data['pageProps']['dnsData']['success']
-    if (apex_status == True & ns_status == True):
-        # getting records lists
-        alexa_rank = data['pageProps']['dnsData']['data']['alexa_rank']
+    if not (apex_status == True & ns_status == True):
+        return False,None
+    # getting records lists
+    alexa_rank = data['pageProps']['dnsData']['data']['alexa_rank']
 
-        subdomain_count = data['pageProps']['subdomainsCount']
-        apex_records = data['pageProps']['apexDomainData']['data']['records']
-        # A records
-        dns_a_records = data['pageProps']['dnsData']['data']['current_dns']['a']
-        if checkKey(dns_a_records, 'values'):
-            dns_a_records = dns_a_records['values']
-        # AAAA records
-        dns_aaaa_records = data['pageProps']['dnsData']['data']['current_dns']['aaaa']
-        if checkKey(dns_aaaa_records, 'values'):
-            dns_aaaa_records = dns_aaaa_records['values']
-        # MX records
-        dns_mx_records = data['pageProps']['dnsData']['data']['current_dns']['mx']
-        if checkKey(dns_mx_records, 'values'):
-            dns_mx_records = dns_mx_records['values']
-        # NS records
-        dns_ns_records = data['pageProps']['dnsData']['data']['current_dns']['ns']
-        if checkKey(dns_ns_records, 'values'):
-            dns_ns_records = dns_ns_records['values']
-        # SOA records
-        dns_soa_records = data['pageProps']['dnsData']['data']['current_dns']['soa']
-        if checkKey(dns_soa_records, 'values'):
-            dns_soa_records = dns_soa_records['values']
-        # TXT records
-        dns_txt_records = data['pageProps']['dnsData']['data']['current_dns']['txt']
-        if checkKey(dns_txt_records, 'values'):
-            dns_txt_records = dns_txt_records['values']
-        #Lists
-        returned_data_subdomains = []
-        returned_data_a = []
-        returned_data_aaaa = []
-        returned_data_mx = []
-        returned_data_ns = []
-        returned_data_txt = []
-        returned_data_soa = []
-        try:
-            # appending domain records
-            for record in apex_records:
-                line = record['hostname'],record['host_provider'],record['mail_provider']
-                returned_data_subdomains.append(line)
-            # appending dns records
-            for record in dns_a_records:
-                line = record['ip'],record['ip_organization']
-                returned_data_a.append(line)
-            for record in dns_aaaa_records:
-                line = record['ipv6'],record['ipv6_organization']
-                returned_data_aaaa.append(line)
-            for record in dns_mx_records:
-                line = record['hostname'],record['hostname_organization'],record['priority']
-                returned_data_mx.append(line)
-            for record in dns_ns_records:
-                line = record['nameserver'],record['nameserver_organization']
-                returned_data_ns.append(line)
-            for record in dns_soa_records:
-                for key in record:
-                    line = record[key]
-                    returned_data_soa.append(line)
-            for record in dns_txt_records:
-                for key in record:
-                    line = record[key]
-                    returned_data_txt.append(line)
+    subdomain_count = data['pageProps']['subdomainsCount']
+    apex_records = data['pageProps']['apexDomainData']['data']['records']
+    # A records
+    dns_a_records = data['pageProps']['dnsData']['data']['current_dns']['a']
+    if checkKey(dns_a_records, 'values'):
+        dns_a_records = dns_a_records['values']
+    # AAAA records
+    dns_aaaa_records = data['pageProps']['dnsData']['data']['current_dns']['aaaa']
+    if checkKey(dns_aaaa_records, 'values'):
+        dns_aaaa_records = dns_aaaa_records['values']
+    # MX records
+    dns_mx_records = data['pageProps']['dnsData']['data']['current_dns']['mx']
+    if checkKey(dns_mx_records, 'values'):
+        dns_mx_records = dns_mx_records['values']
+    # NS records
+    dns_ns_records = data['pageProps']['dnsData']['data']['current_dns']['ns']
+    if checkKey(dns_ns_records, 'values'):
+        dns_ns_records = dns_ns_records['values']
+    # SOA records
+    dns_soa_records = data['pageProps']['dnsData']['data']['current_dns']['soa']
+    if checkKey(dns_soa_records, 'values'):
+        dns_soa_records = dns_soa_records['values']
+    # TXT records
+    dns_txt_records = data['pageProps']['dnsData']['data']['current_dns']['txt']
+    if checkKey(dns_txt_records, 'values'):
+        dns_txt_records = dns_txt_records['values']
+    #Lists
+    returned_data_subdomains = []
+    returned_data_a = []
+    returned_data_aaaa = []
+    returned_data_mx = []
+    returned_data_ns = []
+    returned_data_txt = []
+    returned_data_soa = []
+    try:
+        # appending domain records
+        for record in apex_records:
+            line = record['hostname'],record['host_provider'],record['mail_provider']
+            returned_data_subdomains.append(line)
+        # appending dns records
+        for record in dns_a_records:
+            line = record['ip'],record['ip_organization']
+            returned_data_a.append(line)
+        for record in dns_aaaa_records:
+            line = record['ipv6'],record['ipv6_organization']
+            returned_data_aaaa.append(line)
+        for record in dns_mx_records:
+            line = record['hostname'],record['hostname_organization'],record['priority']
+            returned_data_mx.append(line)
+        for record in dns_ns_records:
+            line = record['nameserver'],record['nameserver_organization']
+            returned_data_ns.append(line)
+        for record in dns_soa_records:
+            for key in record:
+                line = record[key]
+                returned_data_soa.append(line)
+        for record in dns_txt_records:
+            for key in record:
+                line = record[key]
+                returned_data_txt.append(line)
             # detect if cloudflare
-            if returned_data_a[0][1] == 'Cloudflare, Inc.':
-                isCloudflare = True
-            else:
-                isCloudflare = False
-            returned_data = {
-                'domain' : domain,
-                'alexa' : alexa_rank,
-                'subdomains_count': subdomain_count,
-                'iscloudflare':isCloudflare,
-                'subdomains':returned_data_subdomains,
-                'a_records':returned_data_a,
-                'aaaa_records':returned_data_aaaa,
-                'mx_records':returned_data_mx,
-                'ns_records':returned_data_ns,
-                'soa_records': returned_data_soa,
-                'txt_records':returned_data_txt
-            }
-            return True, returned_data
-        except Exception as e:
-            print(e)
-            return False,None
-    else:
+        isCloudflare = returned_data_a[0][1] == 'Cloudflare, Inc.'
+        returned_data = {
+            'domain' : domain,
+            'alexa' : alexa_rank,
+            'subdomains_count': subdomain_count,
+            'iscloudflare':isCloudflare,
+            'subdomains':returned_data_subdomains,
+            'a_records':returned_data_a,
+            'aaaa_records':returned_data_aaaa,
+            'mx_records':returned_data_mx,
+            'ns_records':returned_data_ns,
+            'soa_records': returned_data_soa,
+            'txt_records':returned_data_txt
+        }
+        return True, returned_data
+    except Exception as e:
+        print(e)
         return False,None
 
 # generate report
@@ -229,9 +219,8 @@ def generateReport(data,domain):
         tpl = template.render(data=data)
         if checkDir(f'reports/{domain}') == False:
             os.system(f'{cmd.create_dir} reports/{domain}')
-        f = open(f'reports/{domain}/report-{report_number}.html', 'w')
-        f.write(tpl)
-        f.close()
+        with open(f'reports/{domain}/report-{report_number}.html', 'w') as f:
+            f.write(tpl)
         return report_number
     except Exception as e:
         print(e)
